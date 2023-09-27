@@ -6,6 +6,7 @@ from .models import (
     OrderItem,
     Product,
 )
+from rest_framework.decorators import api_view
 
 
 def banners_list_api(request):
@@ -60,9 +61,10 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
     try:
-        data = json.loads(request.body.decode())
+        data = request.data
     except ValueError:
         return JsonResponse({
             'error': 'bad request',
