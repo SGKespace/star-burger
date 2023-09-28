@@ -7,6 +7,8 @@ from .models import (
     Product,
 )
 from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.response import Response
 
 
 def banners_list_api(request):
@@ -66,32 +68,56 @@ def register_order(request):
     try:
         data = request.data
     except ValueError:
-        return JsonResponse({
-            'error': 'bad request',
-        })
+        error = {'error': 'bad request'}
+        return Response(
+            error,
+            status=status.HTTP_200_OK,
+        )
+
+    if 'products' not in data:
+        return Response(
+            {'error': 'products: Required field'},
+            status=status.HTTP_200_OK,
+        )
+    elif not isinstance(data['products'], list):
+        return Response(
+            {'error': 'products: Expected list with values'},
+            status=status.HTTP_200_OK,
+        )
+    elif len(data['products']) == 0:
+        return Response(
+            {'error': 'products: This list cannot be empty'},
+            status=status.HTTP_200_OK,
+        )
+
     print(data)
 
     try:
         order = Order.objects.create(
-            adress=data["address"],
-            first_name=data["firstname"],
-            second_name=data["lastname"],
-            phone=data["phonenumber"],
+            adress=data['address'],
+            first_name=data['firstname'],
+            second_name=data['lastname'],
+            phone=data['phonenumber'],
         )
 
-        for item in data["products"]:
+        for item in data['products']:
             product = Product.objects.get(
-                id=item["product"]
+                id=item['product']
             )
             OrderItem.objects.create(
                 item=product,
-                count=item["quantity"],
+                count=item['quantity'],
                 order=order,
             )
     except Exception as exception:
-        print(exception)
-        return JsonResponse({
-            'error': 'bad request',
-        })
+
+        Expand
+        Down
+
+    print(exception)
+    return JsonResponse({
+        'error': 'bad request',
+    })
+
 
     return JsonResponse({})
