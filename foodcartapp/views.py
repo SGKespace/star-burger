@@ -9,6 +9,7 @@ from .models import (
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
+from phonenumbers import parse as phone_parse, is_possible_number
 
 
 def banners_list_api(request):
@@ -74,19 +75,37 @@ def register_order(request):
             status=status.HTTP_200_OK,
         )
 
-    if 'products' not in data:
+    required_fiekds = [
+        ['products', list],
+        ['firstname', str],
+        ['lastname', str],
+        ['phonenumber', str],
+        ['address', str],
+    ]
+    for required_field in required_fiekds:
+        if required_field[0] not in data:
+            return Response(
+                {'error': f'{required_field[0]}: Required field'},
+                status=status.HTTP_200_OK,
+            )
+        elif not data[required_field[0]]:
+            return Response(
+                {'error': f'{required_field[0]}: This field cannot be empty'},
+                status=status.HTTP_200_OK,
+            )
+        elif not isinstance(data[required_field[0]], required_field[1]):
+            return Response(
+                {'error': f'{required_field[0]}: Expected {required_field[1]}'},
+                status=status.HTTP_200_OK,
+            )
+        elif required_field[1] == list and len(data[required_field[0]]) == 0:
+            return Response(
+                {'error': f'{required_field[0]}: This list cannot be empty'},
+                status=status.HTTP_200_OK,
+            )
+    if not is_possible_number(phone_parse(data['phonenumber'])):
         return Response(
-            {'error': 'products: Required field'},
-            status=status.HTTP_200_OK,
-        )
-    elif not isinstance(data['products'], list):
-        return Response(
-            {'error': 'products: Expected list with values'},
-            status=status.HTTP_200_OK,
-        )
-    elif len(data['products']) == 0:
-        return Response(
-            {'error': 'products: This list cannot be empty'},
+            {'error': 'phonenumber: Invalid phone number entered'},
             status=status.HTTP_200_OK,
         )
 
@@ -109,15 +128,15 @@ def register_order(request):
                 count=item['quantity'],
                 order=order,
             )
+    except Product.DoesNotExist:
+        return Response(
+            {'error': f'products: Invalid primary key {item["product"]}'},
+            status=status.HTTP_200_OK,
+        )
     except Exception as exception:
-
-        Expand
-        Down
-
-    print(exception)
-    return JsonResponse({
-        'error': 'bad request',
-    })
-
+        print(exception)
+        return JsonResponse({
+            'error': 'bad request',
+        })
 
     return JsonResponse({})
