@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 from phonenumbers import parse as phone_parse, is_possible_number
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -66,57 +67,19 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    try:
-        data = request.data
-    except ValueError:
-        error = {'error': 'bad request'}
-        return Response(
-            error,
-            status=status.HTTP_200_OK,
-        )
+    data = request.data
 
-    required_fiekds = [
-        ['products', list],
-        ['firstname', str],
-        ['lastname', str],
-        ['phonenumber', str],
-        ['address', str],
-    ]
-    for required_field in required_fiekds:
-        if required_field[0] not in data:
-            return Response(
-                {'error': f'{required_field[0]}: Required field'},
-                status=status.HTTP_200_OK,
-            )
-        elif not data[required_field[0]]:
-            return Response(
-                {'error': f'{required_field[0]}: This field cannot be empty'},
-                status=status.HTTP_200_OK,
-            )
-        elif not isinstance(data[required_field[0]], required_field[1]):
-            return Response(
-                {'error': f'{required_field[0]}: Expected {required_field[1]}'},
-                status=status.HTTP_200_OK,
-            )
-        elif required_field[1] == list and len(data[required_field[0]]) == 0:
-            return Response(
-                {'error': f'{required_field[0]}: This list cannot be empty'},
-                status=status.HTTP_200_OK,
-            )
-    if not is_possible_number(phone_parse(data['phonenumber'])):
-        return Response(
-            {'error': 'phonenumber: Invalid phone number entered'},
-            status=status.HTTP_200_OK,
-        )
+    serializer = OrderSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
 
     print(data)
 
     try:
         order = Order.objects.create(
-            adress=data['address'],
-            first_name=data['firstname'],
-            second_name=data['lastname'],
-            phone=data['phonenumber'],
+            address=data['address'],
+            firstname=data['firstname'],
+            lastname=data['lastname'],
+            phonenumber=data['phonenumber'],
         )
 
         for item in data['products']:
@@ -139,4 +102,5 @@ def register_order(request):
             'error': 'bad request',
         })
 
+    # TODO это лишь заглушка
     return JsonResponse({})
