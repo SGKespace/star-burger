@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 from phonenumbers import parse as phone_parse, is_possible_number
-from .serializers import OrderSerializer
+from .serializers import OrderDeserializer, OrderSerializer
 
 
 def banners_list_api(request):
@@ -69,8 +69,8 @@ def product_list_api(request):
 def register_order(request):
     data = request.data
 
-    serializer = OrderSerializer(data=data)
-    serializer.is_valid(raise_exception=True)
+    deserializer = OrderDeserializer(data=data)
+    deserializer.is_valid(raise_exception=True)
 
     print(data)
 
@@ -91,6 +91,21 @@ def register_order(request):
                 count=item['quantity'],
                 order=order,
             )
+
+        order_to_serialize = order.__dict__
+        order_to_serialize['phonenumber'] = data['phonenumber']
+
+        serializer = OrderSerializer(data=order_to_serialize)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     except Product.DoesNotExist:
         return Response(
             {'error': f'products: Invalid primary key {item["product"]}'},
@@ -98,9 +113,10 @@ def register_order(request):
         )
     except Exception as exception:
         print(exception)
-        return JsonResponse({
-            'error': 'bad request',
-        })
+        return Response(
+            {'error': 'bad request'},
+            status=status.HTTP_200_OK,
+        )
 
     # TODO это лишь заглушка
     return JsonResponse({})
