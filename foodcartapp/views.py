@@ -97,7 +97,6 @@ def register_order(request):
 
         serializer = OrderSerializer(data=order_to_serialize)
         if serializer.is_valid():
-            serializer.save()
             return Response(
                 serializer.data,
                 status=status.HTTP_200_OK,

@@ -154,6 +154,12 @@ class OrderItem(models.Model):
         related_name='products',
         on_delete=models.CASCADE,
     )
+    previous_price = models.DecimalField(
+        verbose_name='прежняя цена',
+        decimal_places=2,
+        max_digits=34,
+        validators=[MinValueValidator(0)],
+    )
     count = models.IntegerField(
         verbose_name='количество',
         validators=[MinValueValidator(0)],
