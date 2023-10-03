@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from phonenumbers import parse as phone_parse, is_possible_number
 from .serializers import OrderDeserializer, OrderSerializer
+from django.db import transaction
 
 
 def banners_list_api(request):
@@ -65,6 +66,7 @@ def product_list_api(request):
     })
 
 
+@transaction.atomic
 @api_view(['POST'])
 def register_order(request):
     data = request.data

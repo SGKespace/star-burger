@@ -162,7 +162,7 @@ class OrderItem(models.Model):
     )
     count = models.IntegerField(
         verbose_name='количество',
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(1)],
     )
     order = models.ForeignKey(
         to=Order,
