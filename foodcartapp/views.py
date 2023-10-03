@@ -90,6 +90,7 @@ def register_order(request):
                 item=product,
                 count=item['quantity'],
                 order=order,
+                previous_price=product.price,
             )
 
         order_to_serialize = order.__dict__
