@@ -125,6 +125,17 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    WAIT_MANAGER = 'WM'
+    WAIT_RESTAURANT = 'WR'
+    WAIT_COURIER = 'WC'
+    CLOSED = 'CL'
+    STATUSES = [
+        (WAIT_MANAGER, 'Необработанный'),
+        (WAIT_RESTAURANT, 'Ожидание рестарана'),
+        (WAIT_COURIER, 'Ожидание курьера'),
+        (CLOSED, 'Завершён'),
+    ]
+
     address = models.CharField(
         verbose_name='адрес',
         max_length=200,
@@ -138,6 +149,13 @@ class Order(models.Model):
         max_length=200,
     )
     phonenumber = PhoneNumberField()
+
+    status = models.CharField(
+        max_length=2,
+        choices=STATUSES,
+        default=WAIT_MANAGER,
+        db_index=True,
+    )
 
     def __str__(self):
         return f'{self.firstname} {self.lastname} {self.address}'
