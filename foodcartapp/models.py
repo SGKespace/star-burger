@@ -137,6 +137,13 @@ class Order(models.Model):
         (CLOSED, 'Завершён'),
     ]
 
+    ONLINE = 'ON'
+    OFFLINE = 'OF'
+    PAYMENT_WAYS = [
+        (ONLINE, 'Онлайн'),
+        (OFFLINE, 'Наличными'),
+    ]
+
     address = models.CharField(
         verbose_name='адрес',
         max_length=200,
@@ -182,6 +189,14 @@ class Order(models.Model):
         db_index=True,
         null=True,
         blank=True,
+    )
+
+    payment_way = models.CharField(
+        verbose_name='способ оплаты',
+        max_length=2,
+        choices=PAYMENT_WAYS,
+        default=ONLINE,
+        db_index=True,
     )
 
     def __str__(self):
