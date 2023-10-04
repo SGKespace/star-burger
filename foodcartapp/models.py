@@ -151,10 +151,16 @@ class Order(models.Model):
     phonenumber = PhoneNumberField()
 
     status = models.CharField(
+        verbose_name='статус',
         max_length=2,
         choices=STATUSES,
         default=WAIT_MANAGER,
         db_index=True,
+    )
+
+    comment = models.TextField(
+        verbose_name='комментарий',
+        default=''
     )
 
     def __str__(self):
