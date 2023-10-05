@@ -51,10 +51,14 @@
                 {% for restaurant in item.restaurants %}
                   <li>
                     <details>
-                      <summary>{{ restaurant.name }}</summary>
-                      Название: {{ restaurant.name }} <br/>
-                      Адрес: {{ restaurant.address }} <br/>
-                      Контактный телефон: {{ restaurant.contact_phone }} <br/>
+                      {% if restaurant.1 %}
+                        <summary>{{ restaurant.0.name }} - {{ restaurant.1 }}</summary>
+                      {% else %}
+                        <summary>{{ restaurant.0.name }} - ошибка определения координат</summary>
+                      {% endif %}
+                      Название: {{ restaurant.0.name }} <br/>
+                      Адрес: {{ restaurant.0.address }} <br/>
+                      Контактный телефон: {{ restaurant.0.contact_phone }} <br/>
                     </details>
                   </li>
                 {% endfor %}
