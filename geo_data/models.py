@@ -5,8 +5,7 @@ from django.utils.timezone import now
 class GeoData(models.Model):
     address = models.CharField(
         'адрес',
-        max_length=100,
-        blank=True,
+        max_length=200,
         unique=True,
         db_index=True,
     )
