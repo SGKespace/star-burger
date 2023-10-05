@@ -1,17 +1,12 @@
 from django.http import JsonResponse
+from django.db import transaction
 from django.templatetags.static import static
-import json
-from .models import (
-    Order,
-    OrderItem,
-    Product,
-)
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
-from phonenumbers import parse as phone_parse, is_possible_number
-from .serializers import OrderDeserializer, OrderSerializer
-from django.db import transaction
+
+from .models import Product
+from .serializers import OrderDeserializer, OrderSerializer, OrderItemDeserializer
 
 
 def banners_list_api(request):
@@ -73,52 +68,21 @@ def register_order(request):
 
     deserializer = OrderDeserializer(data=data)
     deserializer.is_valid(raise_exception=True)
-
-    print(data)
+    order = deserializer.save()
 
     try:
-        order = Order.objects.create(
-            address=data['address'],
-            firstname=data['firstname'],
-            lastname=data['lastname'],
-            phonenumber=data['phonenumber'],
-        )
-
         for item in data['products']:
-            product = Product.objects.get(
-                id=item['product']
-            )
-            OrderItem.objects.create(
-                item=product,
-                count=item['quantity'],
-                order=order,
-                previous_price=product.price,
-            )
+            item['order_id'] = order.id
+            order_item_deserializer = OrderItemDeserializer(data=item)
+            order_item_deserializer.is_valid(raise_exception=True)
+            order_item_deserializer.save()
 
-        order_to_serialize = order.__dict__
-        order_to_serialize['phonenumber'] = data['phonenumber']
-
-        serializer = OrderSerializer(data=order_to_serialize)
-        if serializer.is_valid():
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    except Product.DoesNotExist:
-        return Response(
-            {'error': f'products: Invalid primary key {item["product"]}'},
-            status=status.HTTP_200_OK,
-        )
-    except Exception as exception:
-        print(exception)
+        serializer = OrderSerializer(data=order.__dict__)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception:
+        order.delete()
         return Response(
             {'error': 'bad request'},
             status=status.HTTP_200_OK,
         )
-
-    # TODO это лишь заглушка
-    return JsonResponse({})

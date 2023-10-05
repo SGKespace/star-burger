@@ -139,9 +139,11 @@ class Order(models.Model):
 
     ONLINE = 'ON'
     OFFLINE = 'OF'
-    PAYMENT_WAYS = [
+    NOT_SPECIFIED = 'NS'
+    PAYMENT_METHODS = [
         (ONLINE, 'Онлайн'),
         (OFFLINE, 'Наличными'),
+        (NOT_SPECIFIED, 'Не указано')
     ]
 
     address = models.CharField(
@@ -166,10 +168,10 @@ class Order(models.Model):
         db_index=True,
     )
 
-    reustaurant = models.ForeignKey(
+    selected_restaurant = models.ForeignKey(
         Restaurant,
-        related_name='reustaurant_items',
-        verbose_name="ресторан",
+        related_name='restaurant_items',
+        verbose_name="выбранный ресторан",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -177,7 +179,6 @@ class Order(models.Model):
 
     comment = models.TextField(
         verbose_name='комментарий',
-        null=True,
         blank=True,
     )
 
@@ -187,25 +188,25 @@ class Order(models.Model):
         db_index=True,
     )
 
-    phoned_at = models.DateTimeField(
+    called_at = models.DateTimeField(
         verbose_name='время звонка',
         db_index=True,
         null=True,
         blank=True,
     )
 
-    deliver_at = models.DateTimeField(
+    delivered_at = models.DateTimeField(
         verbose_name='время доставки',
         db_index=True,
         null=True,
         blank=True,
     )
 
-    payment_way = models.CharField(
+    payment_method = models.CharField(
         verbose_name='способ оплаты',
         max_length=2,
-        choices=PAYMENT_WAYS,
-        default=ONLINE,
+        choices=PAYMENT_METHODS,
+        default=NOT_SPECIFIED,
         db_index=True,
     )
 
@@ -227,7 +228,7 @@ class OrderItem(models.Model):
     previous_price = models.DecimalField(
         verbose_name='прежняя цена',
         decimal_places=2,
-        max_digits=34,
+        max_digits=7,
         validators=[MinValueValidator(0)],
     )
     count = models.IntegerField(
@@ -240,8 +241,6 @@ class OrderItem(models.Model):
         verbose_name='заказ',
         related_name='products',
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
     )
 
     def __str__(self):
