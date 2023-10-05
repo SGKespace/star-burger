@@ -1,21 +1,18 @@
-import requests
 import os
-
+import requests
 from django import forms, setup
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import views as auth_views, authenticate, login
+from django.db.models import F, Q
 from environs import Env
-from django.contrib.auth import authenticate, login
-from django.contrib.auth import views as auth_views
 from sql_util.utils import SubquerySum
 from geopy import distance
 
-
-from foodcartapp.models import Product, Restaurant, Order, OrderItem
+from foodcartapp.models import Product, Restaurant, Order
 from geo_data.models import GeoData
-from django.db.models import F
 
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'star_burger.settings'
@@ -107,7 +104,6 @@ def view_restaurants(request):
 def fetch_coordinates(apikey, address):
     try:
         geo_data = GeoData.objects.get(address=address)
-        print(geo_data.created_at)
         lon = geo_data.longitude
         lat = geo_data.latitude
     except GeoData.DoesNotExist:
@@ -140,38 +136,57 @@ def fetch_coordinates(apikey, address):
 def view_orders(request):
     yandex_api_key = env('YANDEX_API_KEY')
 
-    orders = Order.objects.all()\
-        .prefetch_related('products__item__menu_items__restaurant')
-    for order in orders:
-        order_coordinates = fetch_coordinates(yandex_api_key, order.address)
-        order_restaurants = set()
-        order_items = order.products.all()
-        for order_item in order_items:
-            for menu_item in order_item.item.menu_items.all():
-                if (menu_item.restaurant, ) not in order_restaurants:
-                    restaurant_coordinates = fetch_coordinates(
-                        yandex_api_key, menu_item.restaurant.address
-                    )
-                    distance_restaurant_order = distance.distance(
-                        restaurant_coordinates[::-1],
-                        order_coordinates[::-1],
-                    ) if order_coordinates and restaurant_coordinates else None
-
-                    order_restaurants.add((
-                        menu_item.restaurant,
-                        distance_restaurant_order,
-                    ))
-        order_restaurants = list(order_restaurants)
-        order_restaurants = sorted(
-            order_restaurants,
-            key=lambda restaurant: restaurant[1] if restaurant[1] else 0
+    orders = Order.objects.filter(~Q(status='CL'))\
+        .prefetch_related('products__item__menu_items__restaurant')\
+        .annotate(
+            cost=SubquerySum(
+                F('products__previous_price')*F('products__count')
+            ),
         )
-        order.restaurants = order_restaurants
 
+    for order in orders:
+        try:
+            order_coordinates = fetch_coordinates(
+                yandex_api_key,
+                order.address,
+            )
+            order_restaurants = set()
+            order_items = order.products.all()
+            for iters, order_item in enumerate(order_items):
+                new_order_restaurants = set()
+                for menu_item in order_item.item.menu_items.all():
+                    if (menu_item.restaurant, ) not in new_order_restaurants:
+                        restaurant_coordinates = fetch_coordinates(
+                            yandex_api_key, menu_item.restaurant.address
+                        )
+                        if order_coordinates and restaurant_coordinates:
+                            if restaurant_coordinates != order_coordinates:
+                                distance_restaurant_order = distance.distance(
+                                    restaurant_coordinates[::-1],
+                                    order_coordinates[::-1],
+                                )
+                            else:
+                                distance_restaurant_order = -1
+                        else:
+                            distance_restaurant_order = 0
 
-    orders.annotate(
-        cost=SubquerySum(F('products__previous_price')*F('products__count')),
-    )
+                        new_order_restaurants.add((
+                            menu_item.restaurant,
+                            distance_restaurant_order,
+                        ))
+                order_restaurants = order_restaurants.intersection(
+                    new_order_restaurants
+                ) if iters > 0 else new_order_restaurants
+                if not order_restaurants:
+                    break
+            order_restaurants = list(order_restaurants)
+            order_restaurants = sorted(
+                order_restaurants,
+                key=lambda restaurant: restaurant[1] if restaurant[1] else 0
+            )
+            order.restaurants = order_restaurants
+        except Exception:
+            pass
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders,
