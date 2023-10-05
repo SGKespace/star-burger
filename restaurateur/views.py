@@ -1,17 +1,28 @@
-from django import forms
+import requests
+import os
+
+from django import forms, setup
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
+from environs import Env
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from sql_util.utils import SubquerySum
+from geopy import distance
 
 
 from foodcartapp.models import Product, Restaurant, Order, OrderItem
+from geo_data.models import GeoData
 from django.db.models import F
-from django.db.models import Sum
+
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'star_burger.settings'
+setup()
+
+env = Env()
+env.read_env()
 
 
 class Login(forms.Form):
@@ -93,20 +104,69 @@ def view_restaurants(request):
     })
 
 
+def fetch_coordinates(apikey, address):
+    try:
+        geo_data = GeoData.objects.get(address=address)
+        print(geo_data.created_at)
+        lon = geo_data.longitude
+        lat = geo_data.latitude
+    except GeoData.DoesNotExist:
+        base_url = "https://geocode-maps.yandex.ru/1.x"
+        response = requests.get(
+            base_url, params={
+                'geocode': address,
+                'apikey': apikey,
+                'format': "json",
+            },
+            timeout=1,
+        )
+        response.raise_for_status()
+        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+        if not found_places:
+            return None
+
+        most_relevant = found_places[0]
+        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+        GeoData.objects.create(
+            address=address,
+            latitude=lat,
+            longitude=lon,
+        )
+    return lon, lat
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    yandex_api_key = env('YANDEX_API_KEY')
 
-    orders = Order.objects.all()
+    orders = Order.objects.all()\
+        .prefetch_related('products__item__menu_items__restaurant')
     for order in orders:
-        order_restaurant_names = set()
+        order_coordinates = fetch_coordinates(yandex_api_key, order.address)
+        order_restaurants = set()
         order_items = order.products.all()
         for order_item in order_items:
             for menu_item in order_item.item.menu_items.all():
-                order_restaurant_names.add(
-                    menu_item.restaurant
-                )
-        order.restaurants = list(order_restaurant_names)
+                if (menu_item.restaurant, ) not in order_restaurants:
+                    restaurant_coordinates = fetch_coordinates(
+                        yandex_api_key, menu_item.restaurant.address
+                    )
+                    distance_restaurant_order = distance.distance(
+                        restaurant_coordinates[::-1],
+                        order_coordinates[::-1],
+                    ) if order_coordinates and restaurant_coordinates else None
 
+                    order_restaurants.add((
+                        menu_item.restaurant,
+                        distance_restaurant_order,
+                    ))
+        order_restaurants = list(order_restaurants)
+        order_restaurants = sorted(
+            order_restaurants,
+            key=lambda restaurant: restaurant[1] if restaurant[1] else 0
+        )
+        order.restaurants = order_restaurants
 
 
     orders.annotate(
