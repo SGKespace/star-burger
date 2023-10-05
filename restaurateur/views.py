@@ -6,9 +6,10 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from sql_util.utils import SubquerySum
 
 
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, OrderItem
 from django.db.models import F
 from django.db.models import Sum
 
@@ -95,8 +96,22 @@ def view_restaurants(request):
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
 
-    orders = Order.objects.annotate(cost=Sum(F('products__previous_price')*F('products__count')))
-    print(orders[0].__dict__)
+    orders = Order.objects.all()
+    for order in orders:
+        order_restaurant_names = set()
+        order_items = order.products.all()
+        for order_item in order_items:
+            for menu_item in order_item.item.menu_items.all():
+                order_restaurant_names.add(
+                    menu_item.restaurant
+                )
+        order.restaurants = list(order_restaurant_names)
+
+
+
+    orders.annotate(
+        cost=SubquerySum(F('products__previous_price')*F('products__count')),
+    )
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders,
