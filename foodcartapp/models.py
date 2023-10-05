@@ -166,9 +166,19 @@ class Order(models.Model):
         db_index=True,
     )
 
+    reustaurant = models.ForeignKey(
+        Restaurant,
+        related_name='reustaurant_items',
+        verbose_name="ресторан",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     comment = models.TextField(
         verbose_name='комментарий',
-        default=''
+        null=True,
+        blank=True,
     )
 
     registered_at = models.DateTimeField(
@@ -210,7 +220,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     item = models.ForeignKey(
         to=Product,
-        verbose_name='товар',
+        verbose_name='продукт',
         related_name='products',
         on_delete=models.CASCADE,
     )
@@ -224,12 +234,18 @@ class OrderItem(models.Model):
         verbose_name='количество',
         validators=[MinValueValidator(1)],
     )
+
     order = models.ForeignKey(
         to=Order,
-        verbose_name='товар',
+        verbose_name='заказ',
         related_name='products',
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
+
+    def __str__(self):
+        return f'[{self.id}]: для заказа {self.order.id}'
 
     class Meta:
         verbose_name = 'элемент заказа'

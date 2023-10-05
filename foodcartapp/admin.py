@@ -123,6 +123,10 @@ class OrderAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         res = super().response_post_save_change(request, obj)
+        if obj.reustaurant and obj.status == 'WM':
+            obj.status = 'WR'
+            obj.save()
+
         if "next" in request.GET and url_has_allowed_host_and_scheme(request.GET['next'], None):
             return HttpResponseRedirect(request.GET['next'])
         else:
