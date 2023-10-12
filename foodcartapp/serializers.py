@@ -1,74 +1,50 @@
-from rest_framework import serializers, status
-from rest_framework.exceptions import APIException
-from .models import Order, Product, OrderItem
+from rest_framework import serializers
+from django.db import transaction
+from .models import Order, OrderItem
 
 
 class OrderItemDeserializer(serializers.ModelSerializer):
-    product = serializers.IntegerField()
-    quantity = serializers.IntegerField()
-    order_id = serializers.IntegerField()
 
+    @transaction.atomic
     def create(self, validated_data):
-        product = Product.objects.get(id=validated_data['product'])
-        order = Order.objects.get(id=validated_data['order_id'])
+        product = validated_data['product']
         return OrderItem.objects.create(
-            item=product,
+            product=product,
             previous_price=product.price,
-            count=validated_data['quantity'],
-            order=order,
+            quantity=validated_data['quantity'],
+            order=Order.objects.get(id=self.__dict__['initial_data']['order']),
         )
 
     class Meta:
         model = OrderItem
-        fields = [
+        fields = (
             'product',
             'quantity',
-            'order_id',
-        ]
-
-
-class ProductsValidationException(APIException):
-    status_code = status.HTTP_200_OK
-    default_detail = 'Invalid primary key'
+        )
 
 
 class OrderDeserializer(serializers.ModelSerializer):
-    products = serializers.ListField(allow_empty=False)
+    products = OrderItemDeserializer(many=True)
 
+    @transaction.atomic
     def create(self, validated_data):
-        try:
-            if 'products' in validated_data:
-                for item in validated_data['products']:
-                    Product.objects.get(
-                        id=item['product']
-                    )
-                del validated_data['products']
-        except Product.DoesNotExist as exception:
-            raise ProductsValidationException(
-                detail={
-                    'error': f'products: Invalid primary key {item["product"]}'
-                },
-            ) from exception
-        return Order.objects.create(**validated_data)
+        products = validated_data.pop('products')
+        order = Order.objects.create(**validated_data)
+        for product in products:
+            product['order'] = order.id
+            product['product'] = product['product'].id
+            order_item_deserializer = OrderItemDeserializer(data=product)
+            order_item_deserializer.is_valid(raise_exception=True)
+            order_item_deserializer.save()
+        return order
 
     class Meta:
         model = Order
-        fields = [
+        fields = (
+            'products',
             'address',
             'firstname',
             'lastname',
             'phonenumber',
-            'products',
-        ]
-
-
-class OrderSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Order
-        fields = [
-            'id',
-            'firstname',
-            'lastname',
-            'address',
-        ]
+        )
+        depth = 1

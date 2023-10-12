@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.utils.timezone import now
+from geo_data.models import GeoData
 
 
 class Restaurant(models.Model):
@@ -26,6 +27,14 @@ class Restaurant(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            try:
+                GeoData.get_or_create_by_address(self.address)
+            except Exception as exception:
+                print(exception)
+        super(Order, self).save(*args, **kwargs)
 
 
 class ProductQuerySet(models.QuerySet):
@@ -217,9 +226,17 @@ class Order(models.Model):
         verbose_name = 'заказы'
         verbose_name_plural = 'заказы'
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            try:
+                GeoData.get_or_create_by_address(self.address)
+            except Exception as exception:
+                print(exception)
+        super(Order, self).save(*args, **kwargs)
+
 
 class OrderItem(models.Model):
-    item = models.ForeignKey(
+    product = models.ForeignKey(
         to=Product,
         verbose_name='продукт',
         related_name='products',
@@ -231,7 +248,7 @@ class OrderItem(models.Model):
         max_digits=7,
         validators=[MinValueValidator(0)],
     )
-    count = models.IntegerField(
+    quantity = models.IntegerField(
         verbose_name='количество',
         validators=[MinValueValidator(1)],
     )
