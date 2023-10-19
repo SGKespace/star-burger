@@ -135,14 +135,14 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
-    WAIT_MANAGER = 'WM'
-    WAIT_RESTAURANT = 'WR'
-    WAIT_COURIER = 'WC'
+    MANAGER = 'WM'
+    RESTAURANT = 'WR'
+    COURIER = 'WC'
     CLOSED = 'CL'
     STATUSES = [
-        (WAIT_MANAGER, 'Необработанный'),
-        (WAIT_RESTAURANT, 'Ожидание рестарана'),
-        (WAIT_COURIER, 'Ожидание курьера'),
+        (MANAGER, 'Необработанный'),
+        (RESTAURANT, 'Ожидание рестарана'),
+        (COURIER, 'Ожидание курьера'),
         (CLOSED, 'Завершён'),
     ]
 
