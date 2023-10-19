@@ -147,11 +147,11 @@ class Order(models.Model):
     ]
 
     ONLINE = 'ON'
-    OFFLINE = 'OF'
+    CASH = 'OF'
     NOT_SPECIFIED = 'NS'
     PAYMENT_METHODS = [
         (ONLINE, 'Онлайн'),
-        (OFFLINE, 'Наличными'),
+        (CASH, 'Наличными'),
         (NOT_SPECIFIED, 'Не указано')
     ]
 
