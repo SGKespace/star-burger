@@ -1,12 +1,11 @@
-from django.http import JsonResponse
-from django.db import transaction
-from django.templatetags.static import static
-from rest_framework.decorators import api_view
-from rest_framework import status
-from rest_framework.response import Response
 
-from .models import Product
-from .serializers import OrderDeserializer
+from django.http import JsonResponse
+from django.templatetags.static import static
+from django.db import transaction
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from foodcartapp.models import Product, Order, OrderDetails
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -55,6 +54,7 @@ def product_list_api(request):
             }
         }
         dumped_products.append(dumped_product)
+
     return JsonResponse(dumped_products, safe=False, json_dumps_params={
         'ensure_ascii': False,
         'indent': 4,
@@ -64,24 +64,19 @@ def product_list_api(request):
 @transaction.atomic
 @api_view(['POST'])
 def register_order(request):
-    data = request.data
+    ''' Регистрирую заказ от покупателя '''
 
-    deserializer = OrderDeserializer(data=data)
-    deserializer.is_valid(raise_exception=True)
-    order = deserializer.save()
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
 
-    try:
-        data_to_serialize = order.__dict__
-        data_to_serialize['phonenumber'] = order.phonenumber.raw_input
-        data_to_serialize['products'] = [
-            {'product': product.product.id, 'quantity': product.quantity}
-            for product in order.products.all()
-        ]
-        serializer = OrderDeserializer(data=data_to_serialize)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Exception as exception:
-        return Response(
-            {'error': 'bad request'},
-            status=status.HTTP_200_OK,
+    for item in request.data['products']:
+        product = Product.objects.get(id=item['product'])
+        OrderDetails.objects.create(
+            order=serializer.data,
+            product=product,
+            quantity=item['quantity'],
+            product_price=product.price
         )
+
+    return Response(request.data)

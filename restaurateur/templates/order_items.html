@@ -3,76 +3,61 @@
 {% block title %}Необработанные заказы | Star Burger{% endblock %}
 
 {% block content %}
-  <center>
-    <h2>Необработанные заказы</h2>
-  </center>
+<center>
+  <h2>Необработанные заказы</h2>
+</center>
 
-  <hr/>
-  <br/>
-  <br/>
-  <div class="container">
-   <table class="table table-responsive">
+<hr />
+<br />
+<br />
+<div class="container">
+  <table class="table table-responsive">
     <tr>
       <th>ID заказа</th>
       <th>Статус</th>
-      <th>Способ оплаты</th>
       <th>Стоимость заказа</th>
+      <th>Способ оплаты</th>
       <th>Клиент</th>
       <th>Телефон</th>
       <th>Адрес доставки</th>
-      <th>Комментарий</th>
-      <th>Рестораны</th>
       <th>Ссылка на админку</th>
+      <th>Комментарий</th>
+      <th>Ресторан</th>
     </tr>
 
     {% for item in order_items %}
-      {% if item.status != 'CL' %}
-        <tr>
-          <td>{{ item.id }}</td>
-          <td>{{ item.get_status_display }}</td>
-          <td>{{ item.get_payment_method_display }}</td>
-          <td>{{ item.cost }} руб.</td>
-          <td>{{ item.firstname }} {{ item.lastname }}</td>
-          <td>{{ item.phonenumber }}</td>
-          <td>{{ item.address }}</td>
-          <td>{{ item.comment }}</td>
-          {% if item.selected_restaurant %}
-            <td>
-              <details>
-                <summary>Готовит {{ item.selected_restaurant }}</summary>
-                Название: {{ item.selected_restaurant.name }} <br/>
-                Адрес: {{ item.selected_restaurant.address }} <br/>
-                Контактный телефон: {{ item.selected_restaurant.contact_phone }} <br/>
-              </details>
-            </td>
+    <tr>
+      <td>{{item.id}}</td>
+      <td>{{item.status}}</td>
+      <td>{{item.amount}}</td>
+      <td>{{item.payment}}</td>
+      <td>{{item.firstname}} {{item.lastname}}</td>
+      <td>{{item.phonenumber}}</td>
+      <td>{{item.address}}</td>
+      <td><a href={% url 'admin:foodcartapp_order_change' object_id=item.id %}?next={{request.path}}>Редактировать</a>
+      </td>
+      <td>{{item.comment}}</td>
+
+      <td>
+        <details>
+          <summary>Развернуть</summary>
+          {% if not item.restaurants %}
+            <li>Ни один ресторан не может приготовить заказ полностью.</li>
           {% else %}
-            <td>Может быть приготовлен ресторанами:
-              <ul>
-                {% for restaurant in item.restaurants %}
-                  <li>
-                    <details>
-                      {% if restaurant.1 %}
-                        {% if restaurant.1 == -1 %}
-                          <summary>{{ restaurant.0.name }} - то же самое место</summary>
-                        {% else %}
-                          <summary>{{ restaurant.0.name }} - {{ restaurant.1 }}</summary>
-                        {% endif %}
-                      {% else %}
-                        <summary>{{ restaurant.0.name }} - ошибка определения координат</summary>
-                      {% endif %}
-                      Название: {{ restaurant.0.name }} <br/>
-                      Адрес: {{ restaurant.0.address }} <br/>
-                      Контактный телефон: {{ restaurant.0.contact_phone }} <br/>
-                    </details>
-                  </li>
-                {% endfor %}
-              </ul>
-            </td>
+            {% for restaurant in item.restaurants %}
+          <li>{{restaurant}} - {{item.distance}} км</li>
+          {% endfor %}
+
           {% endif %}
-          <td><a href="{% url "admin:foodcartapp_order_change" object_id=item.id %}?next={{ request.get_full_path|urlencode }}">Редактировать</a></td>
-        </tr>
-      {% endif %}
+        </details>
+      </td>
+      <td>
+    </tr>
+
+
     {% endfor %}
-   </table>
-  </div>
+
+
+  </table>
+</div>
 {% endblock %}

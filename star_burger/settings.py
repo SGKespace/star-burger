@@ -1,5 +1,4 @@
 import os
-
 import dj_database_url
 
 from environs import Env
@@ -13,15 +12,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 SECRET_KEY = env('SECRET_KEY')
+YANDEX_API_KEY = env('YANDEX_API_KEY')
 DEBUG = env.bool('DEBUG', False)
-
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
 INSTALLED_APPS = [
     'foodcartapp.apps.FoodcartappConfig',
     'restaurateur.apps.RestaurateurConfig',
-    'geo_data.apps.GeoDataConfig',
+    'location.apps.LocationConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -29,7 +28,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'debug_toolbar',
-    'phonenumber_field',
     'rest_framework',
 ]
 
@@ -126,5 +124,3 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
     os.path.join(BASE_DIR, "bundles"),
 ]
-
-YANDEX_API_KEY = env('YANDEX_API_KEY')

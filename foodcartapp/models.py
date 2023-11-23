@@ -1,8 +1,8 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
-from django.utils.timezone import now
-from geo_data.models import GeoData
+from django.db.models import Sum, F
+from django.utils import timezone
 
 
 class Restaurant(models.Model):
@@ -27,14 +27,6 @@ class Restaurant(models.Model):
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            try:
-                GeoData.get_or_create_by_address(self.address)
-            except Exception as exception:
-                print(exception)
-        super(Order, self).save(*args, **kwargs)
 
 
 class ProductQuerySet(models.QuerySet):
@@ -117,6 +109,7 @@ class RestaurantMenuItem(models.Model):
         related_name='menu_items',
         verbose_name='продукт',
     )
+
     availability = models.BooleanField(
         'в продаже',
         default=True,
@@ -134,135 +127,95 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class OrderQuerySet(models.QuerySet):
+    def count_price(self):
+        total_price = self.annotate(amount=Sum(
+            F('orders__quantity') * F('orders__product_price')))
+        return total_price
+
+
 class Order(models.Model):
-    MANAGER = 'WM'
-    RESTAURANT = 'WR'
-    COURIER = 'WC'
-    CLOSED = 'CL'
-    STATUSES = [
-        (MANAGER, 'Необработанный'),
-        (RESTAURANT, 'Ожидание рестарана'),
-        (COURIER, 'Ожидание курьера'),
-        (CLOSED, 'Завершён'),
+
+    UNPROCESSED = 'unprocessed'
+    RECIVE = 'RE'
+    PREPARING = 'PR'
+    DELIVERY = 'DE'
+    DONE = 'DO'
+    STATUS = [
+        (UNPROCESSED, 'Необработано'),
+        (RECIVE, 'Получено'),
+        (PREPARING, 'Подготовка'),
+        (DELIVERY, 'Доставка'),
+        (DONE, 'Выполнено'),
     ]
+    CASH = 'CASH'
+    CARD = 'CARD'
 
-    ONLINE = 'ON'
-    CASH = 'OF'
-    NOT_SPECIFIED = 'NS'
-    PAYMENT_METHODS = [
-        (ONLINE, 'Онлайн'),
-        (CASH, 'Наличными'),
-        (NOT_SPECIFIED, 'Не указано')
+    PAYMENT = [
+        (CASH, 'Наличные'),
+        (CARD, 'Безнал')
+
     ]
-
-    address = models.CharField(
-        verbose_name='адрес',
-        max_length=200,
-    )
-    firstname = models.CharField(
-        verbose_name='имя',
-        max_length=200,
-    )
-    lastname = models.CharField(
-        verbose_name='фамилия',
-        max_length=200,
-    )
-    phonenumber = PhoneNumberField()
-
-    status = models.CharField(
-        verbose_name='статус',
-        max_length=2,
-        choices=STATUSES,
-        default=WAIT_MANAGER,
-        db_index=True,
-    )
-
-    selected_restaurant = models.ForeignKey(
-        Restaurant,
-        related_name='restaurant_items',
-        verbose_name="выбранный ресторан",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-
-    comment = models.TextField(
-        verbose_name='комментарий',
-        blank=True,
-    )
 
     registered_at = models.DateTimeField(
-        verbose_name='время создания заказа',
-        default=now,
-        db_index=True,
-    )
-
-    called_at = models.DateTimeField(
-        verbose_name='время звонка',
-        db_index=True,
+        'Зарегистрировано', default=timezone.now, null=True)
+    called_at = models.DateTimeField('Подтверждено', null=True, blank=True)
+    delivered_at = models.DateTimeField('Доставлено', null=True, blank=True)
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name='restaurants',
+        verbose_name='Ресторан',
         null=True,
-        blank=True,
+        blank=True
     )
-
-    delivered_at = models.DateTimeField(
-        verbose_name='время доставки',
-        db_index=True,
-        null=True,
-        blank=True,
-    )
-
-    payment_method = models.CharField(
-        verbose_name='способ оплаты',
-        max_length=2,
-        choices=PAYMENT_METHODS,
-        default=NOT_SPECIFIED,
-        db_index=True,
-    )
-
-    def __str__(self):
-        return f'{self.firstname} {self.lastname} {self.address}'
+    payment = models.CharField('Cпособ оплаты', max_length=20, choices=PAYMENT)
+    status = models.CharField('Статус', max_length=20,
+                              default=UNPROCESSED, choices=STATUS)
+    firstname = models.CharField('Имя', max_length=50)
+    lastname = models.CharField('Фамилия', max_length=50, blank=True)
+    phonenumber = PhoneNumberField('Телефон', region="RU")
+    address = models.CharField('Адрес', max_length=250)
+    comment = models.TextField('Комментарий', blank=True)
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
-        verbose_name = 'заказы'
-        verbose_name_plural = 'заказы'
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-id']
 
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            try:
-                GeoData.get_or_create_by_address(self.address)
-            except Exception as exception:
-                print(exception)
-        super(Order, self).save(*args, **kwargs)
+    def __str__(self) -> str:
+        return f"{self.firstname} {self.lastname} , {self.address}"
 
 
-class OrderItem(models.Model):
-    product = models.ForeignKey(
-        to=Product,
-        verbose_name='продукт',
-        related_name='products',
-        on_delete=models.CASCADE,
-    )
-    previous_price = models.DecimalField(
-        verbose_name='прежняя цена',
-        decimal_places=2,
-        max_digits=7,
-        validators=[MinValueValidator(0)],
-    )
-    quantity = models.IntegerField(
-        verbose_name='количество',
-        validators=[MinValueValidator(1)],
-    )
+class OrderDetails(models.Model):
 
     order = models.ForeignKey(
-        to=Order,
-        verbose_name='заказ',
-        related_name='products',
+        Order,
         on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name="Заказ"
     )
-
-    def __str__(self):
-        return f'[{self.id}]: для заказа {self.order.id}'
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='selected_products',
+        verbose_name="Товар"
+    )
+    quantity = models.PositiveIntegerField(
+        verbose_name="Количество",
+        validators=[MinValueValidator(1)]
+    )
+    product_price = models.DecimalField(
+        verbose_name='цена товара',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
 
     class Meta:
         verbose_name = 'элемент заказа'
-        verbose_name_plural = 'элементы заказа'
+        verbose_name_plural = 'Элементы заказа'
+
+    def __str__(self) -> str:
+        return f"{self.order}"
