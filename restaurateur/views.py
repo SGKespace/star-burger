@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.http import HttpResponse
 from geopy.distance import distance
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from location.geo_location import get_or_create_locations
