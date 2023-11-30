@@ -2,7 +2,7 @@ import os
 import dj_database_url
 
 from environs import Env
-
+import urllib.parse
 
 env = Env()
 env.read_env()
@@ -84,9 +84,25 @@ WSGI_APPLICATION = 'star_burger.wsgi.application'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+
+POSTGRES_URL_PARSED = env('POSTGRES_URL').split(':')
+
+POSTGRES_URL_PARSED[1] = '//' + urllib.parse.quote(POSTGRES_URL_PARSED[1][2:])
+
+index = 0
+for iters, char in enumerate(POSTGRES_URL_PARSED[2][::-1]):
+    if char == '@':
+        index = iters
+        break
+password = urllib.parse.quote(POSTGRES_URL_PARSED[2][:-index-1])
+host = POSTGRES_URL_PARSED[2][-index:]
+POSTGRES_URL_PARSED[2] = '@'.join([password, host])
+
+POSTGRES_URL_PARSED = ':'.join(POSTGRES_URL_PARSED)
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:////{0}'.format(os.path.join(BASE_DIR, 'db.sqlite3'))
+    'default': dj_database_url.parse(
+        POSTGRES_URL_PARSED,
     )
 }
 
