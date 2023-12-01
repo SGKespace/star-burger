@@ -31,7 +31,7 @@ def get_or_create_locations(*addresses):
             continue
         try:
             coordinates = fetch_coordinates(address)
-        except TypeError:
+        except Exception:
             continue
         
         coordinates = None, None
