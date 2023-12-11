@@ -13,7 +13,8 @@ read -sn1 -p "Press any key to continue..."; echo
 # Обновление кода репозитория
 echo "Updating repository code..."
 cd /opt/star-burger
-git pull origin master
+git checkout main
+git pull --rebase origin
 
 source ./venv/bin/activate
 
