@@ -29,13 +29,13 @@ if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environ
 read -sn1 -p "Press any key to continue..."; echo
 # Накат миграций
 echo "Applying database migrations..."
-/opt/inspection/venv/bin/python3 manage.py migrate 
+python3 manage.py migrate 
 
 if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 # Пересборка статики Django
 echo "Collecting Django static files..."
-/opt/inspection/venv/bin/python3 manage.py collectstatic --noinput
+python3 manage.py collectstatic
 
 if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
