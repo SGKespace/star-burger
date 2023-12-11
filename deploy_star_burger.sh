@@ -2,7 +2,7 @@
 #!/bin/bash
 clear
 set -euxo pipefail
-# cd /opt/star-burger
+cd /opt/star-burger
 
 # Загрузка переменных окружения из файла .env (если он существует)
 if [ -f .env ]; then
@@ -13,7 +13,6 @@ fi
 send_to_rollbar() {
   local ACCESS_TOKEN="$ROLLBAR_ACCESS_TOKEN"
   local MESSAGE="$1"
-
   curl -X POST \
     -H "Content-Type: application/json" \
     -d "{\"access_token\": \"$ACCESS_TOKEN\", \"data\": {\"body\": {\"message\": {\"body\": \"$MESSAGE\"}}}}" \
@@ -26,47 +25,32 @@ if [ -z "$ROLLBAR_ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-
-read -sn1 -p "Press any key to continue..."; echo
 # Обновление кода репозитория
 echo "Updating repository code..."
 cd /opt/star-burger
-
 git pull --rebase origin
 
 source ./venv/bin/activate
 
-if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
-
-read -sn1 -p "Press any key to continue..."; echo
 # Установка библиотек Python
 echo "Installing Python libraries..."
 pip3 install -r requirements.txt 
 
-if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
-read -sn1 -p "Press any key to continue..."; echo
 # Накат миграций
 echo "Applying database migrations..."
 python3 manage.py migrate --noinput
 
-if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
-read -sn1 -p "Press any key to continue..."; echo
 # Пересборка статики Django
 echo "Collecting Django static files..."
 python3 manage.py collectstatic --noinput
 
-if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
-read -sn1 -p "Press any key to continue..."; echo
 systemctl daemon-reload
 systemctl reload getip.service
 systemctl reload nginx.service
 
-if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
-read -sn1 -p "Press any key to continue..."; echo
 # Уведомление об успешном завершении деплоя
 echo "Deployment completed successfully."
 
-read -sn1 -p "Press any key to continue..."; echo
 # В случае ошибки, завершение выполнения скрипта
 set -e
 # Отправка сообщения в Rollbar
