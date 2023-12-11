@@ -9,6 +9,24 @@ if [ -f .env ]; then
 source .env
 fi
 
+# Функция для отправки сообщения в Rollbar
+send_to_rollbar() {
+  local ACCESS_TOKEN="$ROLLBAR_ACCESS_TOKEN"
+  local MESSAGE="$1"
+
+  curl -X POST \
+    -H "Content-Type: application/json" \
+    -d "{\"access_token\": \"$ACCESS_TOKEN\", \"data\": {\"body\": {\"message\": {\"body\": \"$MESSAGE\"}}}}" \
+    https://api.rollbar.com/api/1/item/
+}
+
+# Проверка наличия токена доступа Rollbar
+if [ -z "$ROLLBAR_ACCESS_TOKEN" ]; then
+  echo "Error: ROLLBAR_TOKEN is not set. Please set the environment variable."
+  exit 1
+fi
+
+
 read -sn1 -p "Press any key to continue..."; echo
 # Обновление кода репозитория
 echo "Updating repository code..."
@@ -29,13 +47,13 @@ if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environ
 read -sn1 -p "Press any key to continue..."; echo
 # Накат миграций
 echo "Applying database migrations..."
-python3 manage.py migrate 
+python3 manage.py migrate --noinput
 
 if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 # Пересборка статики Django
 echo "Collecting Django static files..."
-python3 manage.py collectstatic
+python3 manage.py collectstatic --noinput
 
 if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
