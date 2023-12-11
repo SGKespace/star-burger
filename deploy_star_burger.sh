@@ -57,7 +57,6 @@ set -e
 echo "Sending deployment message to Rollbar..."
 send_to_rollbar "Deployment completed successfully."
 
-read -sn1 -p "Press any key to continue..."; echo
 # В случае ошибки, отправка сообщения в Rollbar и завершение выполнения скрипта
 set -e
 trap 'send_to_rollbar "Deployment failed."' ERR
