@@ -18,6 +18,8 @@ git pull --rebase origin
 
 source ./venv/bin/activate
 
+if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
+
 read -sn1 -p "Press any key to continue..."; echo
 # Установка библиотек Python
 echo "Installing Python libraries..."
@@ -26,7 +28,7 @@ pip3 install -r requirements.txt
 read -sn1 -p "Press any key to continue..."; echo
 # Накат миграций
 echo "Applying database migrations..."
-/opt/inspection/venv/bin/python3 manage.py migrate --noinput # Применение миграций без интерактивного ввода
+/opt/inspection/venv/bin/python3 manage.py migrate 
 
 read -sn1 -p "Press any key to continue..."; echo
 # Пересборка статики Django
