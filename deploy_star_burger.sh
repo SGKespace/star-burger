@@ -25,21 +25,25 @@ read -sn1 -p "Press any key to continue..."; echo
 echo "Installing Python libraries..."
 pip3 install -r requirements.txt 
 
+if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 # Накат миграций
 echo "Applying database migrations..."
 /opt/inspection/venv/bin/python3 manage.py migrate 
 
+if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 # Пересборка статики Django
 echo "Collecting Django static files..."
 /opt/inspection/venv/bin/python3 manage.py collectstatic --noinput
 
+if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 systemctl daemon-reload
 systemctl reload getip.service
 systemctl reload nginx.service
 
+if [ x"${VIRTUAL_ENV}" = x ]; then echo "freedom"; else echo "in virtual environment"; fi
 read -sn1 -p "Press any key to continue..."; echo
 # Уведомление об успешном завершении деплоя
 echo "Deployment completed successfully."
