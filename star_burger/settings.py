@@ -15,7 +15,6 @@ SECRET_KEY = env('SECRET_KEY')
 YANDEX_API_KEY = env('YANDEX_API_KEY')
 DEBUG = env.bool('DEBUG', False)
 
-# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost', 'http://sgkespace.ru', 'sgkespace.ru', 'www.sgkespace.ru'])
 ALLOWED_HOSTS = ['82.148.30.157', '0.0.0.0', '127.0.0.1', 'localhost', 'sgkespace.ru', 'http://sgkespace.ru', 'www.sgkespace.ru', 'https://sgkespace.ru']
 
 INSTALLED_APPS = [
