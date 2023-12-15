@@ -44,7 +44,6 @@ python3 manage.py migrate --noinput
 echo "Collecting Django static files..."
 python3 manage.py collectstatic --noinput
 
-systemctl daemon-reload
 systemctl reload getip.service
 systemctl reload nginx.service
 
