@@ -47,9 +47,6 @@ python3 manage.py collectstatic --noinput
 systemctl reload getip.service
 systemctl reload nginx.service
 
-# Уведомление об успешном завершении деплоя
-echo "Deployment completed successfully."
-
 # В случае ошибки, завершение выполнения скрипта
 set -e
 # Отправка сообщения в Rollbar
