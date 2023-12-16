@@ -2,6 +2,9 @@
 #!/bin/bash
 clear
 set -euxo pipefail
+# В случае ошибки, отправка сообщения в Rollbar и завершение выполнения скрипта
+trap 'send_to_rollbar "Deployment failed."' ERR
+
 cd /opt/star-burger
 
 # Загрузка переменных окружения из файла .env (если он существует)
@@ -47,13 +50,8 @@ python3 manage.py collectstatic --noinput
 systemctl reload getip.service
 systemctl reload nginx.service
 
-# В случае ошибки, завершение выполнения скрипта
-set -e
 # Отправка сообщения в Rollbar
 echo "Sending deployment message to Rollbar..."
 send_to_rollbar "Deployment completed successfully."
 
-# В случае ошибки, отправка сообщения в Rollbar и завершение выполнения скрипта
-set -e
-trap 'send_to_rollbar "Deployment failed."' ERR
 
