@@ -150,10 +150,16 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `YANDEX_API_KEY` - Ваш API ключ от геокодера Яндекса
-- `ROLLBAR_ACCESS_TOKEN` - Ваш токен от сервиса rollbar.com
+- `ROLLBAR_ENVIRONMENT`=development
 - `POSTGRES_URL` - postgres://<пользователь postgres>:<пароль пользователя>@<хост базы данных>:<порт бд>/<имя бд>
 
 Подробнее о `POSTGRES_URL` см здесь: https://github.com/jazzband/dj-database-url
+Для подключения Rollbar (опционально), запустите команду export ROLLBAR_ACCESS_TOKEN=your_rollbar_token в командной строке перед запуском скрипта деплоя, значение переменной окружения будет установлено на время текущей сессии командной строки. Пример:
+
+```
+export ROLLBAR_TOKEN=hwdgjh127712iiti7§
+```
+
 Подробнее о `ROLLBAR_ACCESS_TOKEN` см здесь: [rollbar.com](https://rollbar.com)
 
 #### Настройте автоматическую очистку сессий пользователей
