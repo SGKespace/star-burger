@@ -147,9 +147,14 @@ STATICFILES_DIRS = [
 ]
 
 
-ROLLBAR = {
-    'access_token': env('ROLLBAR_ACCESS_TOKEN'),
-    'environment': 'development' if env.bool('ROLLBAR_ENVIRONMENT_DEVELOPMENT', False) else 'production',
-    'code_version': '1.0',
-    'root': BASE_DIR,
-}
+ROLLBAR_ENABLED =  env('ROLLBAR_ACCESS_TOKEN', 'False')
+
+if ROLLBAR_ENABLED:
+    ROLLBAR = {
+        'access_token': ROLLBAR_ENABLED,
+        'environment':  ROLLBAR_ENVIRONMENT,
+        'code_version': '1.0',
+        'root': BASE_DIR,
+    }
+
+    rollbar.init(**ROLLBAR)
