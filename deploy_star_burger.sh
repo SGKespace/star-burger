@@ -14,7 +14,7 @@ fi
 
 # Функция для отправки сообщения в Rollbar
 send_to_rollbar() {
-  local ACCESS_TOKEN="$ROLLBAR_ACCESS_TOKEN"
+  local ACCESS_TOKEN="$ROLLBAR_TOKEN"
   local MESSAGE="$1"
   curl -X POST \
     -H "Content-Type: application/json" \
@@ -23,7 +23,7 @@ send_to_rollbar() {
 }
 
 # Проверка наличия токена доступа Rollbar
-if [ -z "$ROLLBAR_ACCESS_TOKEN" ]; then
+if [ -z "$ROLLBAR_TOKEN" ]; then
   echo "Error: ROLLBAR_TOKEN is not set. Please set the environment variable."
   exit 1
 fi
