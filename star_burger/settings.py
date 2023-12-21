@@ -152,8 +152,8 @@ ROLLBAR_TOKEN =  env('ROLLBAR_ACCESS_TOKEN', 'False')
 
 if ROLLBAR_TOKEN:
     ROLLBAR = {
-        'access_token': ROLLBAR_ENABLED,
-        'environment':  ROLLBAR_TOKEN,
+        'access_token': ROLLBAR_TOKEN,
+        'environment':  ROLLBAR_ENVIRONMENT,
         'code_version': '1.0',
         'root': BASE_DIR,
     }
