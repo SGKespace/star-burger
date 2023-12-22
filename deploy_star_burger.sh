@@ -16,7 +16,7 @@ fi
 # Функция для отправки сообщения в Rollbar
 send_to_rollbar() {
   local ACCESS_TOKEN="$ROLLBAR_TOKEN"
-  local MESSAGE="$1"
+  local MESSAGE="$1"+ " git rev-parse HEAD" 
   curl -X POST \
     -H "Content-Type: application/json" \
     -d "{\"access_token\": \"$ACCESS_TOKEN\", \"data\": {\"body\": {\"message\": {\"body\": \"$MESSAGE\"}}}}" \
