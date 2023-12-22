@@ -33,7 +33,7 @@ fi
 echo "Updating repository code..."
 cd /opt/star-burger
 git pull --rebase origin
-git log
+git rev-parse HEAD
 
 source ./venv/bin/activate
 
