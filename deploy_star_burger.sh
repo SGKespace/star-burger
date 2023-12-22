@@ -54,7 +54,7 @@ systemctl reload nginx.service
 
 # Отправка сообщения в Rollbar
 echo "Sending deployment message to Rollbar..."
-a="git rev-parse HEAD" 
-send_to_rollbar "Deployment completed successfully. $a"
+gh_hash=`git rev-parse HEAD`
+send_to_rollbar "Deployment completed successfully. $gh_hash"
 
 
