@@ -16,7 +16,7 @@ fi
 # Функция для отправки сообщения в Rollbar
 send_to_rollbar() {
   local ACCESS_TOKEN="$ROLLBAR_TOKEN"
-  local MESSAGE="$1"+ " git rev-parse HEAD" 
+  local MESSAGE="$1"
   curl -X POST \
     -H "Content-Type: application/json" \
     -d "{\"access_token\": \"$ACCESS_TOKEN\", \"data\": {\"body\": {\"message\": {\"body\": \"$MESSAGE\"}}}}" \
@@ -54,6 +54,7 @@ systemctl reload nginx.service
 
 # Отправка сообщения в Rollbar
 echo "Sending deployment message to Rollbar..."
-send_to_rollbar "Deployment completed successfully."
+a="git rev-parse HEAD" 
+send_to_rollbar "Deployment completed successfully. $a"
 
 
