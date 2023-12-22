@@ -1,3 +1,4 @@
+# проверяем депплой
 # deploy_star_burger.sh
 #!/bin/bash
 clear
