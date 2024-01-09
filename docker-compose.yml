@@ -1,0 +1,35 @@
+version: "3"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - .:/code
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    environment:
+      - ROLLBAR_TOKEN=${ROLLBAR_TOKEN}
+      - DATABASE_URL=${POSTGRES_URL}
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - .:/app
+    ports:
+      - "1234:1234"
+    restart: on-failure
+
+    command: /app/node_modules/.bin/parcel watch /app/bundles-src/index.js --dist-dir /frontend/bundles --public-url="./"
+
