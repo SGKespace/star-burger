@@ -1,9 +1,9 @@
 # Этап сборки фронтенда 17.6.0  16.16.0
-FROM node:17.6.0 AS frontend
+FROM node:16.16.0 AS frontend
 
 # Установка Node.js и npm
-# RUN apt-get update
-# RUN apt-get install -y nodejs npm
+RUN apt-get update
+RUN apt-get install -y nodejs npm
 
 # Устанавливаем рабочую директорию для фронтенда
 WORKDIR /app
@@ -12,7 +12,7 @@ WORKDIR /app
 COPY frontend/package*.json ./
 
 # Копируем папку со статическими файлами
-# COPY staticfiles/ ./staticfiles
+COPY staticfiles/ ./staticfiles
 
 # Копируем файл index.html из папки templates внутрь контейнера
 # COPY templates/index.html ./
