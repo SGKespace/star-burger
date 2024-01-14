@@ -22,4 +22,4 @@ COPY . /code/
 EXPOSE 8080
 
 # Запускаем ваше приложение для бекенда при старте контейнера
-CMD ["gunicorn", "--access-logfile", "-", "--workers", "3", "--bind", "127.0.0.1:8080", "star_burger.wsgi:application"]
+CMD ["gunicorn", "--access-logfile", "-", "--workers", "3", "--bind", "0.0.0.0:8080", "star_burger.wsgi:application"]
