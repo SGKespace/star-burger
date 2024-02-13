@@ -1,0 +1,23 @@
+version: "3"
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - .:/code
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_PASSWORD=ваш пароль
+      - POSTGRES_DB=имя вашей БД
+      - POSTGRES_USER=имя пользователя
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
